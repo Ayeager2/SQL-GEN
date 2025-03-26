@@ -99,6 +99,7 @@ function addPrimaryKeyField() {
         <option value="FLOAT">FLOAT</option>
         <option value="DATETIME">DATETIME</option>
         <option value="BOOLEAN">BOOLEAN</option>
+        <option value="GUID">GUID</option>
       </select>
       <input type="number" placeholder="Length" class="form-control pkParam1" style="display: none;">
       <input type="number" placeholder="Precision" class="form-control pkParam2" style="display: none;">
@@ -125,6 +126,7 @@ function addForeignKeyField() {
         <option value="FLOAT">FLOAT</option>
         <option value="DATETIME">DATETIME</option>
         <option value="BOOLEAN">BOOLEAN</option>
+        <option value="GUID">GUID</option>
       </select>
       <input type="number" placeholder="Length" class="form-control fkParam1" style="display: none;">
       <input type="number" placeholder="Precision" class="form-control fkParam2" style="display: none;">
@@ -157,7 +159,8 @@ function addRegularField() {
         <option value="TEXT">TEXT</option>
         <option value="FLOAT">FLOAT</option>
         <option value="DATETIME">DATETIME</option>
-        <option value="BOOLEAN">BOOLEAN</option>
+        <option value="BOOLEAN">BOOLEAN</option>        
+        <option value="GUID">GUID</option>
       </select>
       <input type="number" placeholder="Length" class="form-control regularParam1" style="display: none;">
       <input type="number" placeholder="Precision" class="form-control regularParam2" style="display: none;">
@@ -229,8 +232,13 @@ function generateSchemaAndSQL() {
   // Generate SQL
   const sql = generateSQL(schema);
   document.getElementById("outputSQL").textContent = sql;
+  
+ // Show the data generation section
+ const dataGenCollapse = new bootstrap.Collapse(document.getElementById('collapseDataGen'), {
+  toggle: false
+});
+dataGenCollapse.show();
 }
-
 // Generate SQL for creating the database and table
 function generateSQL(schema) {
   let sql = "";
@@ -292,17 +300,153 @@ function getFieldTypeWithParams(field) {
       return `${field.fieldType}(${field.param1 || 255})`;
     case "DECIMAL":
       return `${field.fieldType}(${field.param1 || 10}, ${field.param2 || 2})`;
+    case "GUID":
+      return `UNIQUEIDENTIFIER`
     default:
       return field.fieldType;
   }
 }
 
+// Add a new field based on the template
+function addField(containerId, templateId) {
+  const container = document.getElementById(containerId);
+  const template = document.getElementById(templateId);
+  
+  // Clone the template content (first child)
+  const newField = template.firstElementChild.cloneNode(true);
+  
+  // Clear any input values in the cloned field
+  newField.querySelectorAll('input').forEach(input => {
+    if (input.type !== 'button') {
+      input.value = '';
+    }
+  });
+  
+  // Reset selects to their first option
+  newField.querySelectorAll('select').forEach(select => {
+    select.selectedIndex = 0;
+    // If this is a type select, trigger params update
+    if (select.classList.contains('pkType') || 
+        select.classList.contains('fkType') || 
+        select.classList.contains('regularType')) {
+      toggleFieldParams(select);
+    }
+    // If this is a table select, repopulate referenced fields
+    if (select.classList.contains('fkTable')) {
+      populateReferencedFields(select);
+    }
+  });
+  
+  // Hide all parameter inputs initially
+  newField.querySelectorAll('.pkParam1, .fkParam1, .regularParam1, .pkParam2, .fkParam2, .regularParam2, .pkParam3, .fkParam3, .regularParam3')
+    .forEach(param => {
+      param.style.display = 'none';
+    });
+  
+  // Change the "+" button to a "-" button for removal
+  const addButton = newField.querySelector('.btn-success');
+  if (addButton) {
+    addButton.className = 'btn btn-danger';
+    addButton.textContent = '-';
+    addButton.onclick = function() { removeField(this); };
+  }
+  
+  // Add the new field to the container
+  container.appendChild(newField);
+  
+  // If this is a foreign key field, populate the table dropdown
+  if (containerId === 'foreignKeyFields') {
+    populateTableDropdown();
+  }
+}
+
+// Generate test data SQL
+function generateTestData() {
+  const recordCount = parseInt(document.getElementById('recordCount').value) || 10;
+  const schema = JSON.parse(document.getElementById('outputSchema').textContent);
+  
+  let sql = `-- Test data for ${schema.tableName}\n`;
+  sql += `-- ${recordCount} records\n\n`;
+  
+  // Generate INSERT statements
+  for (let i = 0; i < recordCount; i++) {
+    const columns = [];
+    const values = [];
+    
+    // Handle all fields
+    [...schema.primaryKeys, ...schema.regularFields, ...schema.foreignKeys].forEach(field => {
+      columns.push(field.fieldName);
+      values.push(generateTestValue(field));
+    });
+    
+    sql += `INSERT INTO ${schema.tableName} (${columns.join(', ')})\n`;
+    sql += `VALUES (${values.join(', ')});\n\n`;
+  }
+  
+  document.getElementById('outputTestData').textContent = sql;
+}
+
+// Generate appropriate test value for a field
+function generateTestValue(field) {
+  switch (field.fieldType) {
+    case 'INT':
+      return Math.floor(Math.random() * 1000);
+    case 'VARCHAR':
+      const length = field.param1 || 50;
+      return `'${randomString(length)}'`;
+    case 'BIT':
+      return Math.random() > 0.5 ? 1 : 0;
+    case 'DATE':
+      return `'${randomDate()}'`;
+    case 'DECIMAL':
+      const precision = field.param1 || 10;
+      const scale = field.param2 || 2;
+      return (Math.random() * precision).toFixed(scale);
+    case 'TEXT':
+      return `'${randomString(20)} ${randomString(15)} ${randomString(25)}'`;
+    case 'FLOAT':
+      return (Math.random() * 1000).toFixed(4);
+    case 'DATETIME':
+      return `'${randomDateTime()}'`;
+    case 'BOOLEAN':
+      return Math.random() > 0.5 ? 'TRUE' : 'FALSE';
+    case 'GUID':
+      return `NEWID()`; // For SQL Server
+      // For MySQL: return `UUID()`;
+      // For PostgreSQL: return `gen_random_uuid()`;
+    default:
+      return 'NULL';
+  }
+}
+
+// Helper functions for generating random data
+function randomString(length) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+function randomDate() {
+  const start = new Date(2010, 0, 1);
+  const end = new Date();
+  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()))
+    .toISOString().split('T')[0];
+}
+
+function randomDateTime() {
+  const start = new Date(2010, 0, 1);
+  const end = new Date();
+  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()))
+    .toISOString().slice(0, 19).replace('T', ' ');
+}
+
 // Initialize the form
 function initializeForm() {
   populateTableDropdown();
-  addPrimaryKeyField();
-  addForeignKeyField();
-  addRegularField();
+ 
 }
 
 // Call the initialize function when the page loads
