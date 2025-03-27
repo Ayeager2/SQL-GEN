@@ -1,23 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dynamic Database and Table Creator</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="index.css">
   <style>
     .field-group {
       margin-bottom: 1rem;
     }
-
     .accordion-button:not(.collapsed) {
       background-color: #e9ecef;
     }
   </style>
 </head>
-
 <body class="p-4">
   <div class="container">
     <h1 class="mb-4">Dynamic Database and Table Creator</h1>
@@ -25,7 +23,7 @@
     <!-- Create Database Section -->
     <div class="mb-4">
       <div class="form-check">
-        <input type="checkbox" class="form-check-input" id="createDatabaseCheckbox" onchange="toggleDatabaseForm()" />
+        <input type="checkbox" class="form-check-input" id="createDatabaseCheckbox" />
         <label class="form-check-label" for="createDatabaseCheckbox">Create Database</label>
       </div>
       <div id="databaseForm" style="display: none">
@@ -35,8 +33,17 @@
         </div>
       </div>
     </div>
+    <div class="mb-3">
+      <label for="databaseType" class="form-label">Database Type</label>
+      <select class="form-select" id="databaseType">
+        <option value="SQLServer">SQL Server</option>
+        <option value="MySQL">MySQL</option>
+        <option value="PostgreSQL">PostgreSQL</option>
+        <option value="Oracle">Oracle</option>
+      </select>
+    </div>
 
-    <!-- Create Table Section (Inside Accordion) -->
+    <!-- Create Table Section -->
     <div class="accordion" id="tableAccordion">
       <div class="accordion-item">
         <h2 class="accordion-header" id="headingTable">
@@ -49,25 +56,24 @@
           data-bs-parent="#tableAccordion">
           <div class="accordion-body">
             <form id="tableForm">
-              <!-- Table Name -->
-              <div class="mb-3">
+              <div class="mb-4">
                 <label for="tableName" class="form-label">Table Name:</label>
-                <input type="text" id="tableName" class="form-control" required />
+                <input type="text" id="tableName" class="form-control required-field" required /> 
               </div>
 
-              <!-- Auto-Increment ID Checkbox -->
-              <div class="mb-3 form-check">
+              </div>
+
+              <div class="m-4 form-check">
                 <input type="checkbox" class="form-check-input" id="autoIncrementCheckbox" />
                 <label class="form-check-label" for="autoIncrementCheckbox">Add Auto-Incrementing ID Field</label>
               </div>
 
-              <!-- Primary Keys -->
-              <div id="primaryKeyFields" class="mb-4">
+              <div id="primaryKeyFields" class="m-4">
                 <h3>Primary Keys</h3>
                 <div class="field-group" id="primaryKeyTemplate">
                   <div class="input-group mb-2">
                     <input type="text" placeholder="Field Name" class="form-control pkField" />
-                    <select class="form-select pkType" onchange="toggleFieldParams(this)">
+                    <select class="form-select pkType">
                       <option value="INT">INT</option>
                       <option value="VARCHAR">VARCHAR</option>
                       <option value="BIT">BIT</option>
@@ -76,25 +82,22 @@
                       <option value="TEXT">TEXT</option>
                       <option value="FLOAT">FLOAT</option>
                       <option value="DATETIME">DATETIME</option>
-                      <option value="BOOLEAN">BOOLEAN</option>
                       <option value="GUID">GUID</option>
                     </select>
                     <input type="number" placeholder="Length" class="form-control pkParam1" style="display: none" />
                     <input type="number" placeholder="Precision" class="form-control pkParam2" style="display: none" />
                     <input type="number" placeholder="Scale" class="form-control pkParam3" style="display: none" />
-                    <button type="button" class="btn btn-success"
-                      onclick="addField('primaryKeyFields', 'primaryKeyTemplate')">+</button>
+                    <button type="button" class="btn btn-success add-pk-btn">+</button>
                   </div>
                 </div>
               </div>
 
-              <!-- Foreign Keys -->
-              <div id="foreignKeyFields" class="mb-4">
+              <div id="foreignKeyFields" class="m-4">
                 <h3>Foreign Keys</h3>
                 <div class="field-group" id="foreignKeyTemplate">
                   <div class="input-group mb-2">
                     <input type="text" placeholder="Field Name" class="form-control fkField" />
-                    <select class="form-select fkType" onchange="toggleFieldParams(this)">
+                    <select class="form-select fkType">
                       <option value="INT">INT</option>
                       <option value="VARCHAR">VARCHAR</option>
                       <option value="BIT">BIT</option>
@@ -103,31 +106,28 @@
                       <option value="TEXT">TEXT</option>
                       <option value="FLOAT">FLOAT</option>
                       <option value="DATETIME">DATETIME</option>
-                      <option value="BOOLEAN">BOOLEAN</option>
                       <option value="GUID">GUID</option>
                     </select>
                     <input type="number" placeholder="Length" class="form-control fkParam1" style="display: none" />
                     <input type="number" placeholder="Precision" class="form-control fkParam2" style="display: none" />
                     <input type="number" placeholder="Scale" class="form-control fkParam3" style="display: none" />
-                    <select class="form-select fkTable" onchange="populateReferencedFields(this)">
+                    <select class="form-select fkTable">
                       <option value="">Select Table</option>
                     </select>
                     <select class="form-select fkReferencedField">
                       <option value="">Select Field</option>
                     </select>
-                    <button type="button" class="btn btn-success"
-                      onclick="addField('foreignKeyFields', 'foreignKeyFields')">+</button>
+                    <button type="button" class="btn btn-success add-fk-btn">+</button>
                   </div>
                 </div>
               </div>
 
-              <!-- Regular Fields -->
-              <div id="regularFields" class="mb-4">
+              <div id="regularFields" class="m-4">
                 <h3>Regular Fields</h3>
                 <div class="field-group" id="regularFieldTemplate">
                   <div class="input-group mb-2">
                     <input type="text" placeholder="Field Name" class="form-control regularField" />
-                    <select class="form-select regularType" onchange="toggleFieldParams(this)">
+                    <select class="form-select regularType">
                       <option value="INT">INT</option>
                       <option value="VARCHAR">VARCHAR</option>
                       <option value="BIT">BIT</option>
@@ -136,86 +136,96 @@
                       <option value="TEXT">TEXT</option>
                       <option value="FLOAT">FLOAT</option>
                       <option value="DATETIME">DATETIME</option>
-                      <option value="BOOLEAN">BOOLEAN</option>
                       <option value="GUID">GUID</option>
                     </select>
-                    <input type="number" placeholder="Length" class="form-control regularParam1"
-                      style="display: none" />
-                    <input type="number" placeholder="Precision" class="form-control regularParam2"
-                      style="display: none" />
+                    <input type="number" placeholder="Length" class="form-control regularParam1" style="display: none" />
+                    <input type="number" placeholder="Precision" class="form-control regularParam2" style="display: none" />
                     <input type="number" placeholder="Scale" class="form-control regularParam3" style="display: none" />
-                    <button type="button" class="btn btn-success"
-                      onclick="addField('regularFields', 'regularFields')">+</button>
+                    <button type="button" class="btn btn-success add-regular-btn">+</button>
                   </div>
                 </div>
               </div>
 
-              <!-- Generate Button -->
-              <button type="button" class="btn btn-primary" onclick="generateSchemaAndSQL()">
+              <button type="button" class="btn btn-primary m-4" id="generateButton">
                 Generate Schema and SQL
               </button>
+              <div class="form-check m-4">
+                <input class="form-check-input" type="checkbox" id="addDropLogicCheckbox">
+                <label class="form-check-label" for="addDropLogicCheckbox">Drop Table</label>
+              </div>
             </form>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Output Section -->
-    <div class="accordion mt-4" id="outputAccordion">
-      <!-- Generated Schema -->
-      <div class="accordion-item">
-        <h2 class="accordion-header" id="headingSchema">
-          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSchema"
-            aria-expanded="false" aria-controls="collapseSchema">
-            Generated Schema
-          </button>
-        </h2>
-        <div id="collapseSchema" class="accordion-collapse collapse show" aria-labelledby="headingSchema"
-          data-bs-parent="#outputAccordion">
-          <div class="accordion-body">
-            <pre id="outputSchema"></pre>
-          </div>
-        </div>
+<!-- Output Section -->
+<div class="accordion mt-4" id="outputAccordion">
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingSchema">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+              data-bs-target="#collapseSchema" aria-expanded="false" aria-controls="collapseSchema">
+        Generated Schema
+      </button>
+    </h2>
+    <div id="collapseSchema" class="accordion-collapse collapse show" aria-labelledby="headingSchema"
+         data-bs-parent="#outputAccordion">
+      <div class="accordion-body position-relative">
+        <button class="btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-2 copy-btn" 
+                data-target="outputSchema" title="Copy to clipboard">
+          <i class="bi bi-clipboard"></i> Copy
+        </button>
+        <pre id="outputSchema" class="mt-3 output-content"></pre>
       </div>
-
-      <!-- Generated SQL -->
-      <div class="accordion-item">
-        <h2 class="accordion-header" id="headingSQL">
-          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-            data-bs-target="#collapseSQL" aria-expanded="false" aria-controls="collapseSQL">
-            Generated SQL
-          </button>
-        </h2>
-        <div id="collapseSQL" class="accordion-collapse collapse" aria-labelledby="headingSQL"
-          data-bs-parent="#outputAccordion">
-          <div class="accordion-body">
-            <pre id="outputSQL"></pre>
-          </div>
-        </div>
-      </div>
-      <div class="accordion-item">
-        <h2 class="accordion-header" id="headingDataGen">
-          <button class="accordion-button collapsed" type="button" 
-                  data-bs-toggle="collapse" data-bs-target="#collapseDataGen"
-                  aria-expanded="false" aria-controls="collapseDataGen">
-            Generate Test Data
-          </button>
-        </h2>
-        <div id="collapseDataGen" class="accordion-collapse collapse" 
-             aria-labelledby="headingDataGen" data-bs-parent="#outputAccordion">
-          <div class="accordion-body">
-            <div class="mb-3">
-              <label for="recordCount" class="form-label">Number of Records:</label>
-              <input type="number" id="recordCount" class="form-control" min="1" value="10">
-            </div>
-            <button type="button" class="btn btn-primary" onclick="generateTestData()">
-              Generate Test Data SQL
-            </button>
-            <pre id="outputTestData" class="mt-3"></pre>
-          </div>
-        </div>
-      </div>      
     </div>
+  </div>
+
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingSQL">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#collapseSQL" aria-expanded="false" aria-controls="collapseSQL">
+        Generated SQL
+      </button>
+    </h2>
+    <div id="collapseSQL" class="accordion-collapse collapse" aria-labelledby="headingSQL"
+         data-bs-parent="#outputAccordion">
+      <div class="accordion-body position-relative">
+        <button class="btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-2 copy-btn" 
+                data-target="outputSQL" title="Copy to clipboard">
+          <i class="bi bi-clipboard"></i> Copy
+        </button>
+        <pre id="outputSQL" class="output-content"></pre>
+      </div>
+    </div>
+  </div>
+  
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingDataGen">
+      <button class="accordion-button collapsed" type="button" 
+              data-bs-toggle="collapse" data-bs-target="#collapseDataGen"
+              aria-expanded="false" aria-controls="collapseDataGen">
+        Generate Test Data
+      </button>
+    </h2>
+    <div id="collapseDataGen" class="accordion-collapse collapse" 
+         aria-labelledby="headingDataGen" data-bs-parent="#outputAccordion">
+      <div class="accordion-body position-relative">
+        <div class="mb-3">
+          <label for="recordCount" class="form-label">Number of Records:</label>
+          <input type="number" id="recordCount" class="form-control" min="1" value="10">
+        </div>
+        <button type="button" class="btn btn-primary" id="generateTestDataBtn">
+          Generate Test Data SQL
+        </button>
+        <button class="btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-2 copy-btn" 
+                data-target="outputTestData" title="Copy to clipboard">
+          <i class="bi bi-clipboard"></i> Copy
+        </button>
+        <pre id="outputTestData" class="mt-3 output-content"></pre>
+      </div>
+    </div>
+  </div>      
+</div>
   </div>
 
   <!-- Add this inside your outputAccordion div, after the Generated SQL section -->
@@ -225,7 +235,5 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Custom JS -->
   <script src="script.js"></script>
-
 </body>
-
 </html>

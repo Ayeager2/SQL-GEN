@@ -1,5 +1,5 @@
 /* Add to your existing style section */
-#outputTestData {
+#outputDiv {
     background-color: #f8f9fa;
     border-radius: 1px;
     border-color: goldenrod;
@@ -8,3 +8,30 @@
     max-height: 400px;
     overflow-y: auto;
   }
+
+  .required-field:invalid {
+    border-color: #dc3545;
+  }
+
+  /* Copy button styles */
+.copy-btn {
+  transition: all 0.2s ease;
+  z-index: 1; /* Ensure it stays above other elements */
+}
+
+.output-content {
+  position: relative;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 0.25rem;
+  border: 1px solid #dee2e6;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.output-content:hover {
+  background-color: #e9ecef;
+}
+
+/* If using Bootstrap Icons */
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css");
